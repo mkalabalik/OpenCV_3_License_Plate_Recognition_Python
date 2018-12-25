@@ -11,7 +11,7 @@ import Preprocess
 import PossibleChar
 
 # module level variables ##########################################################################
-
+# Test:module level variables ##########################################################################
 kNearest = cv2.ml.KNearest_create()
 
         # constants for checkIfPossibleChar, this checks one possible char only (does not compare to another char)

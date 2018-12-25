@@ -12,8 +12,8 @@ import PossiblePlate
 import PossibleChar
 
 # module level variables ##########################################################################
-PLATE_WIDTH_PADDING_FACTOR = 1.3
-PLATE_HEIGHT_PADDING_FACTOR = 1.5
+PLATE_WIDTH_PADDING_FACTOR = 1.3  #1.3
+PLATE_HEIGHT_PADDING_FACTOR = 1.5 #1.5
 
 ###################################################################################################
 def detectPlatesInScene(imgOriginalScene):
@@ -170,7 +170,7 @@ def extractPlate(imgOriginal, listOfMatchingChars):
     fltPlateCenterY = (listOfMatchingChars[0].intCenterY + listOfMatchingChars[len(listOfMatchingChars) - 1].intCenterY) / 2.0
 
     ptPlateCenter = fltPlateCenterX, fltPlateCenterY
-
+    
             # calculate plate width and height
     intPlateWidth = int((listOfMatchingChars[len(listOfMatchingChars) - 1].intBoundingRectX + listOfMatchingChars[len(listOfMatchingChars) - 1].intBoundingRectWidth - listOfMatchingChars[0].intBoundingRectX) * PLATE_WIDTH_PADDING_FACTOR)
 

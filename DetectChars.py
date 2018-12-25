@@ -11,7 +11,7 @@ import Preprocess
 import PossibleChar
 
 # module level variables ##########################################################################
-# Test:module level variables ##########################################################################
+
 kNearest = cv2.ml.KNearest_create()
 
         # constants for checkIfPossibleChar, this checks one possible char only (does not compare to another char)
@@ -21,18 +21,18 @@ MIN_PIXEL_HEIGHT = 8
 MIN_ASPECT_RATIO = 0.25
 MAX_ASPECT_RATIO = 1.0
 
-MIN_PIXEL_AREA = 80
+MIN_PIXEL_AREA = 80 #80
 
         # constants for comparing two chars
-MIN_DIAG_SIZE_MULTIPLE_AWAY = 0.3
-MAX_DIAG_SIZE_MULTIPLE_AWAY = 5.0
+MIN_DIAG_SIZE_MULTIPLE_AWAY = 0.3 #0.3
+MAX_DIAG_SIZE_MULTIPLE_AWAY = 5.0 #5.0
 
-MAX_CHANGE_IN_AREA = 0.5
+MAX_CHANGE_IN_AREA = 0.5 #0.85 #0.5
 
-MAX_CHANGE_IN_WIDTH = 0.8
-MAX_CHANGE_IN_HEIGHT = 0.2
+MAX_CHANGE_IN_WIDTH = 0.8  #0.8
+MAX_CHANGE_IN_HEIGHT = 0.2 #0.2
 
-MAX_ANGLE_BETWEEN_CHARS = 12.0
+MAX_ANGLE_BETWEEN_CHARS = 12.0 #12.0
 
         # other constants
 MIN_NUMBER_OF_MATCHING_CHARS = 3
@@ -40,7 +40,7 @@ MIN_NUMBER_OF_MATCHING_CHARS = 3
 RESIZED_CHAR_IMAGE_WIDTH = 20
 RESIZED_CHAR_IMAGE_HEIGHT = 30
 
-MIN_CONTOUR_AREA = 100
+MIN_CONTOUR_AREA = 100 #100
 
 ###################################################################################################
 def loadKNNDataAndTrainKNN():
@@ -48,7 +48,7 @@ def loadKNNDataAndTrainKNN():
     validContoursWithData = []              # we will fill these shortly
 
     try:
-        npaClassifications = np.loadtxt("classifications.txt", np.float32)                  # read in training classifications
+        npaClassifications = np.loadtxt("classifications.txt", np.float32)                  # read in training classifications        
     except:                                                                                 # if file could not be opened
         print("error, unable to open classifications.txt, exiting program\n")  # show error message
         os.system("pause")
@@ -65,7 +65,7 @@ def loadKNNDataAndTrainKNN():
 
     npaClassifications = npaClassifications.reshape((npaClassifications.size, 1))       # reshape numpy array to 1d, necessary to pass to call to train
 
-    kNearest.setDefaultK(1)                                                             # set default K to 1
+    kNearest.setDefaultK(7)                                                             # set default K to 1
 
     kNearest.train(npaFlattenedImages, cv2.ml.ROW_SAMPLE, npaClassifications)           # train KNN object
 
@@ -87,7 +87,7 @@ def detectCharsInPlates(listOfPossiblePlates):
     for possiblePlate in listOfPossiblePlates:          # for each possible plate, this is a big for loop that takes up most of the function
 
         possiblePlate.imgGrayscale, possiblePlate.imgThresh = Preprocess.preprocess(possiblePlate.imgPlate)     # preprocess to get grayscale and threshold images
-
+        
         if Main.showSteps == True: # show steps ###################################################
             cv2.imshow("5a", possiblePlate.imgPlate)
             cv2.imshow("5b", possiblePlate.imgGrayscale)
@@ -95,10 +95,12 @@ def detectCharsInPlates(listOfPossiblePlates):
         # end if # show steps #####################################################################
 
                 # increase size of plate image for easier viewing and char detection
+        
         possiblePlate.imgThresh = cv2.resize(possiblePlate.imgThresh, (0, 0), fx = 1.6, fy = 1.6)
-
+        
                 # threshold again to eliminate any gray areas
         thresholdValue, possiblePlate.imgThresh = cv2.threshold(possiblePlate.imgThresh, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        possiblePlate.imgInverseThresh = cv2.bitwise_not(possiblePlate.imgThresh) #this will be used for extra traing
 
         if Main.showSteps == True: # show steps ###################################################
             cv2.imshow("5d", possiblePlate.imgThresh)
@@ -210,8 +212,9 @@ def detectCharsInPlates(listOfPossiblePlates):
             cv2.imshow("9", imgContours)
         # end if # show steps #####################################################################
 
+        possiblePlate.listChars = longestListOfMatchingCharsInPlate
         possiblePlate.strChars = recognizeCharsInPlate(possiblePlate.imgThresh, longestListOfMatchingCharsInPlate)
-
+        
         if Main.showSteps == True: # show steps ###################################################
             print("chars found in plate number " + str(
                 intPlateCounter) + " = " + possiblePlate.strChars + ", click on any image and press a key to continue . . .")
@@ -268,7 +271,7 @@ def findListOfListsOfMatchingChars(listOfPossibleChars):
             # the purpose of this function is to re-arrange the one big list of chars into a list of lists of matching chars,
             # note that chars that are not found to be in a group of matches do not need to be considered further
     listOfListsOfMatchingChars = []                  # this will be the return value
-
+    
     for possibleChar in listOfPossibleChars:                        # for each possible char in the one big list of chars
         listOfMatchingChars = findListOfMatchingChars(possibleChar, listOfPossibleChars)        # find all chars in the big list that match the current char
 
@@ -417,7 +420,8 @@ def recognizeCharsInPlate(imgThresh, listOfMatchingChars):
                            currentChar.intBoundingRectX : currentChar.intBoundingRectX + currentChar.intBoundingRectWidth]
 
         imgROIResized = cv2.resize(imgROI, (RESIZED_CHAR_IMAGE_WIDTH, RESIZED_CHAR_IMAGE_HEIGHT))           # resize image, this is necessary for char recognition
-
+        #cv2.imshow("harf", imgROIResized)
+        #cv2.waitKey()
         npaROIResized = imgROIResized.reshape((1, RESIZED_CHAR_IMAGE_WIDTH * RESIZED_CHAR_IMAGE_HEIGHT))        # flatten image into 1d numpy array
 
         npaROIResized = np.float32(npaROIResized)               # convert from 1d numpy array of ints to 1d numpy array of floats
@@ -436,6 +440,7 @@ def recognizeCharsInPlate(imgThresh, listOfMatchingChars):
 
     return strChars
 # end function
+
 
 
 

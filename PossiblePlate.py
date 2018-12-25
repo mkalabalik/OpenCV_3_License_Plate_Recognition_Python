@@ -12,7 +12,11 @@ class PossiblePlate:
         self.imgGrayscale = None
         self.imgThresh = None
 
+        self.imgInverseThresh = None
+        self.listChars = None
+
         self.rrLocationOfPlateInScene = None
+
 
         self.strChars = ""
     # end constructor

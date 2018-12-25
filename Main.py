@@ -8,6 +8,9 @@ import DetectChars
 import DetectPlates
 import PossiblePlate
 
+import Preprocess
+import GenData
+
 # module level variables ##########################################################################
 SCALAR_BLACK = (0.0, 0.0, 0.0)
 SCALAR_WHITE = (255.0, 255.0, 255.0)
@@ -15,10 +18,15 @@ SCALAR_YELLOW = (0.0, 255.0, 255.0)
 SCALAR_GREEN = (0.0, 255.0, 0.0)
 SCALAR_RED = (0.0, 0.0, 255.0)
 
-showSteps = False
+showSteps =not True
+learning = not True
 
+GUI_IMAGE_SIZE_X = 648
+GUI_IMAGE_SIZE_Y = 486
+GUI_LICENSE_SIZE_X = 220
+GUI_LICENSE_SIZE_Y = 60
 ###################################################################################################
-def main():
+def main(locationOrigialImageScene = "imgOriginalScene.png"):
 
     blnKNNTrainingSuccessful = DetectChars.loadKNNDataAndTrainKNN()         # attempt KNN training
 
@@ -27,8 +35,8 @@ def main():
         return                                                          # and exit program
     # end if
 
-    imgOriginalScene  = cv2.imread("LicPlateImages/1.png")               # open image
-
+    imgOriginalScene  = cv2.imread(locationOrigialImageScene)            # open image
+    
     if imgOriginalScene is None:                            # if image was not read successfully
         print("\nerror: image not read from file \n\n")  # print error message to std out
         os.system("pause")                                  # pause so user can see error message
@@ -39,10 +47,12 @@ def main():
 
     listOfPossiblePlates = DetectChars.detectCharsInPlates(listOfPossiblePlates)        # detect chars in plates
 
-    cv2.imshow("imgOriginalScene", imgOriginalScene)            # show scene image
+##    cv2.imshow("imgOriginalScene", imgOriginalScene)            # show scene image
 
     if len(listOfPossiblePlates) == 0:                          # if no plates were found
+        cv2.imwrite("imgOriginalSceneGui.png", cv2.resize(imgOriginalScene, (GUI_IMAGE_SIZE_X, GUI_IMAGE_SIZE_Y)))
         print("\nno license plates were detected\n")  # inform user no plates were found
+        return None
     else:                                                       # else
                 # if we get in here list of possible plates has at leat one plate
 
@@ -52,8 +62,8 @@ def main():
                 # suppose the plate with the most recognized chars (the first plate in sorted by string length descending order) is the actual plate
         licPlate = listOfPossiblePlates[0]
 
-        cv2.imshow("imgPlate", licPlate.imgPlate)           # show crop of plate and threshold of plate
-        cv2.imshow("imgThresh", licPlate.imgThresh)
+##        cv2.imshow("imgPlate", licPlate.imgPlate)           # show crop of plate and threshold of plate
+##        cv2.imshow("imgThresh", licPlate.imgThresh)
 
         if len(licPlate.strChars) == 0:                     # if no chars were found in the plate
             print("\nno characters were detected\n\n")  # show message
@@ -67,15 +77,30 @@ def main():
 
         writeLicensePlateCharsOnImage(imgOriginalScene, licPlate)           # write license plate text on the image
 
-        cv2.imshow("imgOriginalScene", imgOriginalScene)                # re-show scene image
+##        cv2.imshow("imgOriginalScene", imgOriginalScene)                # re-show scene image
 
-        cv2.imwrite("imgOriginalScene.png", imgOriginalScene)           # write image out to file
-
+        #cv2.imwrite("imgOriginalScene.png", imgOriginalScene)           # write image out to file
+        cv2.imwrite("imgOriginalSceneGui.png",
+                    cv2.resize(imgOriginalScene, (GUI_IMAGE_SIZE_X, GUI_IMAGE_SIZE_Y)))
+        cv2.imwrite("imgLicenseCharsGui.png",
+                    cv2.resize(drawBoxAroundChar(licPlate.imgThresh, licPlate.listChars), (GUI_LICENSE_SIZE_X, GUI_LICENSE_SIZE_Y)))
+##        cv2.imwrite("imgLicenseCharsGui.png", drawBoxAroundChar(licPlate.imgThresh, licPlate.listChars))
+        cv2.imwrite("imgLicenseGui.png",
+                    cv2.resize(licPlate.imgPlate, (GUI_LICENSE_SIZE_X, GUI_LICENSE_SIZE_Y)))
     # end if else
 
-    cv2.waitKey(0)					# hold windows open until user presses a key
+    #cv2.waitKey(0)					# hold windows open until user presses a key
 
-    return
+    if learning:
+        cv2.imshow("InverseThresh", licPlate.imgInverseThresh)
+        #cv2.imwrite("InverseThresh.png", licPlate.imgInverseThresh)
+        cv2.waitKey()
+        GenData.main(imgTraining = licPlate.imgInverseThresh)
+        input("çık")
+        #dogruPlaka = input("Plaka gir")
+        #gen data.ogrenme()
+    print(licPlate.strChars)
+    return licPlate.strChars
 # end main
 
 ###################################################################################################
@@ -129,6 +154,19 @@ def writeLicensePlateCharsOnImage(imgOriginalScene, licPlate):
     cv2.putText(imgOriginalScene, licPlate.strChars, (ptLowerLeftTextOriginX, ptLowerLeftTextOriginY), intFontFace, fltFontScale, SCALAR_YELLOW, intFontThickness)
 # end function
 
+def drawBoxAroundChar(imgThresh, listOfChars):
+    height, width = imgThresh.shape
+    imgThreshColor = np.zeros((height, width, 3), np.uint8)
+    cv2.cvtColor(imgThresh, cv2.COLOR_GRAY2BGR, imgThreshColor)
+    
+    for currentChar in listOfChars:
+        pt1 = (currentChar.intBoundingRectX, currentChar.intBoundingRectY)
+        pt2 = ((currentChar.intBoundingRectX + currentChar.intBoundingRectWidth), (currentChar.intBoundingRectY + currentChar.intBoundingRectHeight))
+        cv2.rectangle(imgThreshColor, pt1, pt2, SCALAR_GREEN, 2)           # draw green box around the char
+
+    return imgThreshColor
+    #end for
+#end function
 ###################################################################################################
 if __name__ == "__main__":
     main()
